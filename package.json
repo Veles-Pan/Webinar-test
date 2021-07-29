@@ -1,5 +1,6 @@
 {
   "name": "webinar-frontend-test-task",
+  "homepage": "./",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
