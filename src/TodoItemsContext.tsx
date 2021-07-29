@@ -93,29 +93,10 @@ export const useTodoItems = () => {
   return todoItemsContext
 }
 
-const sortingKey = 'isSortingState'
 function todoItemsReducer(state: TodoItemsState, action: TodoItemsAction) {
   switch (action.type) {
     case 'loadState': {
-      const isSorting = localStorage.getItem(sortingKey) ? false : true
       return action.data
-
-      let sortedItems = state.todoItems.slice().sort((a, b) => {
-        if (a.done && !b.done) {
-          return 1
-        }
-
-        if (!a.done && b.done) {
-          return -1
-        }
-
-        return 0
-      })
-
-      return {
-        ...state,
-        todoItems: isSorting ? sortedItems : state.todoItems,
-      }
     }
     case 'add':
       return {

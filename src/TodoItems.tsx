@@ -1,4 +1,4 @@
-import {useCallback, useMemo} from 'react'
+import {useCallback, useMemo, useEffect, useState} from 'react'
 import Card from '@material-ui/core/Card'
 import CardHeader from '@material-ui/core/CardHeader'
 import CardContent from '@material-ui/core/CardContent'
@@ -14,14 +14,12 @@ import classnames from 'classnames'
 import {motion} from 'framer-motion'
 import {TodoItem, useTodoItems} from './TodoItemsContext'
 import {DndContext, DragEndEvent} from '@dnd-kit/core'
-import {SortableContext, arrayMove} from '@dnd-kit/sortable'
+import {SortableContext} from '@dnd-kit/sortable'
 import {useSortable} from '@dnd-kit/sortable'
 import {CSS} from '@dnd-kit/utilities'
 import Button from '@material-ui/core/Button'
-import {useState} from 'react'
-import {InputBaseComponentProps, TextField} from '@material-ui/core'
+import {TextField} from '@material-ui/core'
 import EditIcon from '@material-ui/icons/Edit'
-import {useEffect} from 'react'
 
 const spring = {
   type: 'spring',
@@ -121,7 +119,7 @@ export const TodoItemCard = function ({item}: {item: TodoItem}) {
   const classes = useTodoItemCardStyles()
   const {dispatch} = useTodoItems()
 
-  const {attributes, listeners, setNodeRef, transform, transition, isDragging} =
+  const {attributes, listeners, setNodeRef, transform, transition} =
     useSortable({id: item.id})
 
   const style = {
@@ -164,7 +162,7 @@ export const TodoItemCard = function ({item}: {item: TodoItem}) {
     } else {
       setTitleError('Title should be at least 1 char')
     }
-  }, [titleInput, detailsInput, dispatch])
+  }, [titleInput, detailsInput, item.id, dispatch])
 
   return (
     <Card
@@ -205,7 +203,6 @@ export const TodoItemCard = function ({item}: {item: TodoItem}) {
                 required
                 style={{marginRight: '20px'}}
                 placeholder='Edit title'
-                id='title'
                 type='text'
                 error={Boolean(titleError)}
                 onChange={e => {
@@ -214,7 +211,6 @@ export const TodoItemCard = function ({item}: {item: TodoItem}) {
                 value={titleInput}
               />
               <TextField
-                id='details'
                 placeholder='Edit details'
                 type='text'
                 onChange={e => editDetailsInput(e.target.value)}
