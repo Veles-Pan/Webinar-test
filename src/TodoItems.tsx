@@ -149,6 +149,11 @@ export const TodoItemCard = function ({item}: {item: TodoItem}) {
   )
   const [titleError, setTitleError] = useState<string | undefined>()
 
+  useEffect(() => {
+    editTitleInput(item.title)
+    editDetailsInput(item.details)
+  }, [item.title, item.details])
+
   const changeItem = useCallback(() => {
     if (titleInput.length > 1) {
       setTitleError(undefined)
@@ -194,32 +199,34 @@ export const TodoItemCard = function ({item}: {item: TodoItem}) {
           </IconButton>
         }
         subheader={
-          <div style={{display: 'flex'}}>
-            <TextField
-              required
-              style={{marginRight: '20px'}}
-              placeholder='Edit title'
-              id='title'
-              type='text'
-              error={Boolean(titleError)}
-              onChange={e => {
-                editTitleInput(e.target.value)
-              }}
-              value={titleInput}
-            />
-            <TextField
-              id='details'
-              placeholder='Edit details'
-              type='text'
-              onChange={e => editDetailsInput(e.target.value)}
-              value={detailsInput}
-            />
+          <>
+            <div style={{display: 'flex'}}>
+              <TextField
+                required
+                style={{marginRight: '20px'}}
+                placeholder='Edit title'
+                id='title'
+                type='text'
+                error={Boolean(titleError)}
+                onChange={e => {
+                  editTitleInput(e.target.value)
+                }}
+                value={titleInput}
+              />
+              <TextField
+                id='details'
+                placeholder='Edit details'
+                type='text'
+                onChange={e => editDetailsInput(e.target.value)}
+                value={detailsInput}
+              />
 
+              <IconButton onClick={changeItem}>
+                <EditIcon />
+              </IconButton>
+            </div>
             {titleError}
-            <IconButton onClick={changeItem}>
-              <EditIcon />
-            </IconButton>
-          </div>
+          </>
         }
       />
       {item.details ? (
