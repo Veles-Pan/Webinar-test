@@ -31,19 +31,3 @@
 ### Ссылка на GH-pages
 [Здесь можно увидеть функционал приложения](https://veles-pan.github.io/Webinar-test/)
 
-## Работа с проектом
-
-Проект был развёрнут с помощью Create React App.
-
-Используйте `npm install` для установки зависимостей и `npm start` 
-для локального разворачивания проекта.
-
-Больше информации можно найти в 
-[документации CRA](https://facebook.github.io/create-react-app/docs/getting-started).
-
-## Используемый стек
-
-- TypeScript
-- React
-- Material-UI
-- Framer Motion
