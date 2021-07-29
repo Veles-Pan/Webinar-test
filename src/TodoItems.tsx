@@ -7,7 +7,9 @@ import IconButton from '@material-ui/core/IconButton'
 import Checkbox from '@material-ui/core/Checkbox'
 import FormControlLabel from '@material-ui/core/FormControlLabel'
 import DeleteIcon from '@material-ui/icons/Delete'
-import {makeStyles} from '@material-ui/core/styles'
+import DragIndicatorIcon from '@material-ui/icons/DragIndicator'
+import SortIcon from '@material-ui/icons/Sort'
+import {makeStyles, withStyles} from '@material-ui/core/styles'
 import classnames from 'classnames'
 import {motion} from 'framer-motion'
 import {TodoItem, useTodoItems} from './TodoItemsContext'
@@ -15,7 +17,7 @@ import {DndContext, DragEndEvent} from '@dnd-kit/core'
 import {SortableContext, arrayMove} from '@dnd-kit/sortable'
 import {useSortable} from '@dnd-kit/sortable'
 import {CSS} from '@dnd-kit/utilities'
-import {useEffect} from 'react'
+import Button from '@material-ui/core/Button'
 import {useState} from 'react'
 
 const spring = {
@@ -31,6 +33,12 @@ const useTodoItemListStyles = makeStyles({
     padding: 0,
   },
 })
+
+const SortingButon = withStyles(theme => ({
+  root: {
+    marginTop: '15px',
+  },
+}))(Button)
 
 const localStorageKey = 'isSortingState'
 
@@ -92,14 +100,18 @@ export const TodoItemsList = function () {
         }}
       >
         <SortableContext items={todoItems.map(i => i.id)}>
-          <button
+          <SortingButon
+            variant='contained'
+            color='secondary'
             onClick={() => {
               localStorage.removeItem(localStorageKey)
               handleOnSort()
             }}
+            startIcon={<SortIcon />}
           >
-            SORT AGAIN
-          </button>
+            Sort Again
+          </SortingButon>
+
           <ul className={classes.root}>
             {isSorting
               ? sortedItems.map(item => (
@@ -137,12 +149,6 @@ export const TodoItemCard = function ({item}: {item: TodoItem}) {
   const {attributes, listeners, setNodeRef, transform, transition, isDragging} =
     useSortable({id: item.id})
 
-  useEffect(() => {
-    if (isDragging) {
-      console.log('DRAGGING')
-    }
-  }, [isDragging])
-
   const style = {
     transform: transform ? CSS.Translate.toString(transform) : '',
     transition: transition ?? '',
@@ -169,8 +175,6 @@ export const TodoItemCard = function ({item}: {item: TodoItem}) {
       className={classnames(classes.root, {
         [classes.doneRoot]: item.done,
       })}
-      {...attributes}
-      {...listeners}
     >
       <CardHeader
         action={
@@ -190,6 +194,11 @@ export const TodoItemCard = function ({item}: {item: TodoItem}) {
             }
             label={item.title}
           />
+        }
+        avatar={
+          <IconButton aria-label='drag' {...attributes} {...listeners}>
+            <DragIndicatorIcon />
+          </IconButton>
         }
       />
       {item.details ? (

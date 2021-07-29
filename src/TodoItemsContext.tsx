@@ -73,7 +73,6 @@ export const useTodoItems = () => {
 function todoItemsReducer(state: TodoItemsState, action: TodoItemsAction) {
   switch (action.type) {
     case 'loadState': {
-      console.log(action.data)
       return action.data
     }
     case 'add':
@@ -99,8 +98,6 @@ function todoItemsReducer(state: TodoItemsState, action: TodoItemsAction) {
         ),
       }
     case 'setSorted': {
-      console.log('!!!!!!!!')
-      console.log(action.data)
       return action.data
     }
     case 'toggleDone':
