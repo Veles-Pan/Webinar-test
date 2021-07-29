@@ -1,4 +1,4 @@
-import {useCallback} from 'react'
+import {useCallback, useMemo} from 'react'
 import Card from '@material-ui/core/Card'
 import CardHeader from '@material-ui/core/CardHeader'
 import CardContent from '@material-ui/core/CardContent'
@@ -19,6 +19,9 @@ import {useSortable} from '@dnd-kit/sortable'
 import {CSS} from '@dnd-kit/utilities'
 import Button from '@material-ui/core/Button'
 import {useState} from 'react'
+import {InputBaseComponentProps, TextField} from '@material-ui/core'
+import EditIcon from '@material-ui/icons/Edit'
+import {useEffect} from 'react'
 
 const spring = {
   type: 'spring',
@@ -41,16 +44,13 @@ const SortingButon = withStyles(theme => ({
 }))(Button)
 
 const localStorageKey = 'isSortingState'
-
 export const TodoItemsList = function () {
   const {dispatch} = useTodoItems()
   let {todoItems} = useTodoItems()
   const [isSorting, setSorting] = useState<boolean>(
     localStorage.getItem(localStorageKey) ? false : true
   )
-
   const classes = useTodoItemListStyles()
-
   let sortedItems = todoItems.slice().sort((a, b) => {
     if (a.done && !b.done) {
       return 1
@@ -168,6 +168,24 @@ export const TodoItemCard = function ({item}: {item: TodoItem}) {
     [item.id, dispatch]
   )
 
+  const [titleInput, editTitleInput] = useState<string>(item.title)
+  const [detailsInput, editDetailsInput] = useState<string | undefined>(
+    item.details
+  )
+  const [titleError, setTitleError] = useState<string | undefined>()
+
+  const changeItem = useCallback(() => {
+    if (titleInput.length > 1) {
+      setTitleError(undefined)
+      dispatch({
+        type: 'infoChange',
+        data: {id: item.id, title: titleInput, details: detailsInput},
+      })
+    } else {
+      setTitleError('Title should be at least 1 char')
+    }
+  }, [titleInput, detailsInput, dispatch])
+
   return (
     <Card
       ref={setNodeRef}
@@ -199,6 +217,34 @@ export const TodoItemCard = function ({item}: {item: TodoItem}) {
           <IconButton aria-label='drag' {...attributes} {...listeners}>
             <DragIndicatorIcon />
           </IconButton>
+        }
+        subheader={
+          <div style={{display: 'flex'}}>
+            <TextField
+              required
+              style={{marginRight: '20px'}}
+              placeholder='Edit title'
+              id='title'
+              type='text'
+              error={Boolean(titleError)}
+              onChange={e => {
+                editTitleInput(e.target.value)
+              }}
+              value={titleInput}
+            />
+            <TextField
+              id='details'
+              placeholder='Edit details'
+              type='text'
+              onChange={e => editDetailsInput(e.target.value)}
+              value={detailsInput}
+            />
+
+            {titleError}
+            <IconButton onClick={changeItem}>
+              <EditIcon />
+            </IconButton>
+          </div>
         }
       />
       {item.details ? (

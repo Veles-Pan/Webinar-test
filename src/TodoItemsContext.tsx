@@ -19,7 +19,14 @@ interface TodoItemsState {
 }
 
 interface TodoItemsAction {
-  type: 'loadState' | 'add' | 'delete' | 'toggleDone' | 'dragEnd' | 'setSorted'
+  type:
+    | 'loadState'
+    | 'add'
+    | 'delete'
+    | 'toggleDone'
+    | 'dragEnd'
+    | 'setSorted'
+    | 'infoChange'
   data: any
 }
 
@@ -100,6 +107,28 @@ function todoItemsReducer(state: TodoItemsState, action: TodoItemsAction) {
     case 'setSorted': {
       return action.data
     }
+    case 'infoChange':
+      console.log(action.data)
+      const changedIndex = state.todoItems.findIndex(
+        ({id}) => id === action.data.id
+      )
+      const newTitle = action.data.title
+      const newDetails = action.data.details
+
+      return {
+        ...state,
+        todoItems: state.todoItems.map((item, index) => {
+          if (changedIndex === index) {
+            return {
+              ...item,
+              title: newTitle,
+              details: newDetails,
+            }
+          }
+
+          return item
+        }),
+      }
     case 'toggleDone':
       const itemIndex = state.todoItems.findIndex(
         ({id}) => id === action.data.id
