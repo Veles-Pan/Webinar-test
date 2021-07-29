@@ -45,6 +45,22 @@ export const TodoItemsContextProvider = ({
   const [state, dispatch] = useReducer(todoItemsReducer, defaultState)
 
   useEffect(() => {
+    function handleStorageChange(event: StorageEvent) {
+      const savedState = localStorage.getItem(localStorageKey)
+      if (savedState) {
+        try {
+          dispatch({type: 'loadState', data: JSON.parse(savedState)})
+        } catch {}
+      }
+    }
+    window.addEventListener('storage', handleStorageChange)
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+    }
+  }, [])
+
+  useEffect(() => {
     const savedState = localStorage.getItem(localStorageKey)
 
     if (savedState) {
@@ -77,10 +93,29 @@ export const useTodoItems = () => {
   return todoItemsContext
 }
 
+const sortingKey = 'isSortingState'
 function todoItemsReducer(state: TodoItemsState, action: TodoItemsAction) {
   switch (action.type) {
     case 'loadState': {
+      const isSorting = localStorage.getItem(sortingKey) ? false : true
       return action.data
+
+      let sortedItems = state.todoItems.slice().sort((a, b) => {
+        if (a.done && !b.done) {
+          return 1
+        }
+
+        if (!a.done && b.done) {
+          return -1
+        }
+
+        return 0
+      })
+
+      return {
+        ...state,
+        todoItems: isSorting ? sortedItems : state.todoItems,
+      }
     }
     case 'add':
       return {
@@ -105,7 +140,22 @@ function todoItemsReducer(state: TodoItemsState, action: TodoItemsAction) {
         ),
       }
     case 'setSorted': {
-      return action.data
+      let sortedItems = state.todoItems.slice().sort((a, b) => {
+        if (a.done && !b.done) {
+          return 1
+        }
+
+        if (!a.done && b.done) {
+          return -1
+        }
+
+        return 0
+      })
+
+      return {
+        ...state,
+        todoItems: sortedItems,
+      }
     }
     case 'infoChange':
       console.log(action.data)
@@ -129,6 +179,7 @@ function todoItemsReducer(state: TodoItemsState, action: TodoItemsAction) {
           return item
         }),
       }
+
     case 'toggleDone':
       const itemIndex = state.todoItems.findIndex(
         ({id}) => id === action.data.id

@@ -43,68 +43,49 @@ const SortingButon = withStyles(theme => ({
   },
 }))(Button)
 
-const localStorageKey = 'isSortingState'
+const sortingKey = 'isSortingState'
 export const TodoItemsList = function () {
-  const {dispatch} = useTodoItems()
-  let {todoItems} = useTodoItems()
-  const [isSorting, setSorting] = useState<boolean>(
-    localStorage.getItem(localStorageKey) ? false : true
-  )
+  const {dispatch, todoItems} = useTodoItems()
   const classes = useTodoItemListStyles()
-  let sortedItems = todoItems.slice().sort((a, b) => {
-    if (a.done && !b.done) {
-      return 1
-    }
-
-    if (!a.done && b.done) {
-      return -1
-    }
-
-    return 0
-  })
-
-  const itemIds = todoItems.map(i => i.id)
+  const itemIds = useMemo(() => todoItems.map(i => i.id), [todoItems])
 
   const handleOnDragEnd = useCallback(
-    (oldIndex: number, newIndex: number) =>
-      dispatch({
-        type: 'dragEnd',
-        data: {
-          oldIndex: oldIndex,
-          newIndex: newIndex,
-        },
-      }),
-    [dispatch]
+    (event: DragEndEvent) => {
+      if (event.over?.id && event.active.id !== event.over?.id) {
+        const oldIndex = itemIds.indexOf(event.active.id)
+        const newIndex = itemIds.indexOf(event.over.id)
+        localStorage.setItem(sortingKey, 'false')
+
+        dispatch({
+          type: 'dragEnd',
+          data: {
+            oldIndex: oldIndex,
+            newIndex: newIndex,
+          },
+        })
+      }
+    },
+    [itemIds, dispatch]
   )
 
   const handleOnSort = useCallback(
     () =>
       dispatch({
         type: 'setSorted',
-        data: {todoItems: sortedItems},
+        data: undefined,
       }),
-    [sortedItems, dispatch]
+    [dispatch]
   )
 
   return (
     <>
-      <DndContext
-        onDragEnd={(event: DragEndEvent) => {
-          if (event.over?.id && event.active.id !== event.over?.id) {
-            const oldIndex = itemIds.indexOf(event.active.id)
-            const newIndex = itemIds.indexOf(event.over.id)
-            localStorage.setItem(localStorageKey, 'false')
-            setSorting(false)
-            handleOnDragEnd(oldIndex, newIndex)
-          }
-        }}
-      >
+      <DndContext onDragEnd={handleOnDragEnd}>
         <SortableContext items={todoItems.map(i => i.id)}>
           <SortingButon
             variant='contained'
             color='secondary'
             onClick={() => {
-              localStorage.removeItem(localStorageKey)
+              localStorage.removeItem(sortingKey)
               handleOnSort()
             }}
             startIcon={<SortIcon />}
@@ -113,17 +94,11 @@ export const TodoItemsList = function () {
           </SortingButon>
 
           <ul className={classes.root}>
-            {isSorting
-              ? sortedItems.map(item => (
-                  <motion.li key={item.id} transition={spring} layout={true}>
-                    <TodoItemCard item={item} />
-                  </motion.li>
-                ))
-              : todoItems.map(item => (
-                  <motion.li key={item.id} transition={spring} layout={true}>
-                    <TodoItemCard item={item} />
-                  </motion.li>
-                ))}
+            {todoItems.map(item => (
+              <motion.li key={item.id} transition={spring} layout={true}>
+                <TodoItemCard item={item} />
+              </motion.li>
+            ))}
           </ul>
         </SortableContext>
       </DndContext>
