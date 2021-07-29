@@ -11,6 +11,12 @@ import {makeStyles} from '@material-ui/core/styles'
 import classnames from 'classnames'
 import {motion} from 'framer-motion'
 import {TodoItem, useTodoItems} from './TodoItemsContext'
+import {DndContext, DragEndEvent} from '@dnd-kit/core'
+import {SortableContext, arrayMove} from '@dnd-kit/sortable'
+import {useSortable} from '@dnd-kit/sortable'
+import {CSS} from '@dnd-kit/utilities'
+import {useEffect} from 'react'
+import {useState} from 'react'
 
 const spring = {
   type: 'spring',
@@ -26,12 +32,18 @@ const useTodoItemListStyles = makeStyles({
   },
 })
 
+const localStorageKey = 'isSortingState'
+
 export const TodoItemsList = function () {
-  const {todoItems} = useTodoItems()
+  const {dispatch} = useTodoItems()
+  let {todoItems} = useTodoItems()
+  const [isSorting, setSorting] = useState<boolean>(
+    localStorage.getItem(localStorageKey) ? false : true
+  )
 
   const classes = useTodoItemListStyles()
 
-  const sortedItems = todoItems.slice().sort((a, b) => {
+  let sortedItems = todoItems.slice().sort((a, b) => {
     if (a.done && !b.done) {
       return 1
     }
@@ -43,14 +55,67 @@ export const TodoItemsList = function () {
     return 0
   })
 
+  const itemIds = todoItems.map(i => i.id)
+
+  const handleOnDragEnd = useCallback(
+    (oldIndex: number, newIndex: number) =>
+      dispatch({
+        type: 'dragEnd',
+        data: {
+          oldIndex: oldIndex,
+          newIndex: newIndex,
+        },
+      }),
+    [dispatch]
+  )
+
+  const handleOnSort = useCallback(
+    () =>
+      dispatch({
+        type: 'setSorted',
+        data: {todoItems: sortedItems},
+      }),
+    [sortedItems, dispatch]
+  )
+
   return (
-    <ul className={classes.root}>
-      {sortedItems.map(item => (
-        <motion.li key={item.id} transition={spring} layout={true}>
-          <TodoItemCard item={item} />
-        </motion.li>
-      ))}
-    </ul>
+    <>
+      <DndContext
+        onDragEnd={(event: DragEndEvent) => {
+          if (event.over?.id && event.active.id !== event.over?.id) {
+            const oldIndex = itemIds.indexOf(event.active.id)
+            const newIndex = itemIds.indexOf(event.over.id)
+            localStorage.setItem(localStorageKey, 'false')
+            setSorting(false)
+            handleOnDragEnd(oldIndex, newIndex)
+          }
+        }}
+      >
+        <SortableContext items={todoItems.map(i => i.id)}>
+          <button
+            onClick={() => {
+              localStorage.removeItem(localStorageKey)
+              handleOnSort()
+            }}
+          >
+            SORT AGAIN
+          </button>
+          <ul className={classes.root}>
+            {isSorting
+              ? sortedItems.map(item => (
+                  <motion.li key={item.id} transition={spring} layout={true}>
+                    <TodoItemCard item={item} />
+                  </motion.li>
+                ))
+              : todoItems.map(item => (
+                  <motion.li key={item.id} transition={spring} layout={true}>
+                    <TodoItemCard item={item} />
+                  </motion.li>
+                ))}
+          </ul>
+        </SortableContext>
+      </DndContext>
+    </>
   )
 }
 
@@ -69,6 +134,20 @@ export const TodoItemCard = function ({item}: {item: TodoItem}) {
   const classes = useTodoItemCardStyles()
   const {dispatch} = useTodoItems()
 
+  const {attributes, listeners, setNodeRef, transform, transition, isDragging} =
+    useSortable({id: item.id})
+
+  useEffect(() => {
+    if (isDragging) {
+      console.log('DRAGGING')
+    }
+  }, [isDragging])
+
+  const style = {
+    transform: transform ? CSS.Translate.toString(transform) : '',
+    transition: transition ?? '',
+  }
+
   const handleDelete = useCallback(
     () => dispatch({type: 'delete', data: {id: item.id}}),
     [item.id, dispatch]
@@ -85,9 +164,13 @@ export const TodoItemCard = function ({item}: {item: TodoItem}) {
 
   return (
     <Card
+      ref={setNodeRef}
+      style={style}
       className={classnames(classes.root, {
         [classes.doneRoot]: item.done,
       })}
+      {...attributes}
+      {...listeners}
     >
       <CardHeader
         action={

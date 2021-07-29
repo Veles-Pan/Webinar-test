@@ -1,3 +1,4 @@
+import {arrayMove} from '@dnd-kit/sortable'
 import {
   createContext,
   ReactNode,
@@ -18,7 +19,7 @@ interface TodoItemsState {
 }
 
 interface TodoItemsAction {
-  type: 'loadState' | 'add' | 'delete' | 'toggleDone'
+  type: 'loadState' | 'add' | 'delete' | 'toggleDone' | 'dragEnd' | 'setSorted'
   data: any
 }
 
@@ -72,6 +73,7 @@ export const useTodoItems = () => {
 function todoItemsReducer(state: TodoItemsState, action: TodoItemsAction) {
   switch (action.type) {
     case 'loadState': {
+      console.log(action.data)
       return action.data
     }
     case 'add':
@@ -87,6 +89,20 @@ function todoItemsReducer(state: TodoItemsState, action: TodoItemsAction) {
         ...state,
         todoItems: state.todoItems.filter(({id}) => id !== action.data.id),
       }
+    case 'dragEnd':
+      return {
+        ...state,
+        todoItems: arrayMove(
+          state.todoItems,
+          action.data.oldIndex,
+          action.data.newIndex
+        ),
+      }
+    case 'setSorted': {
+      console.log('!!!!!!!!')
+      console.log(action.data)
+      return action.data
+    }
     case 'toggleDone':
       const itemIndex = state.todoItems.findIndex(
         ({id}) => id === action.data.id
